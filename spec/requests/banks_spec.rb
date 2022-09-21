@@ -7,7 +7,7 @@ RSpec.describe 'Banks', type: :request do
 
       it 'should return a bank' do
         get '/banks'
-        payload = JSON.parse(response.body)
+        payload = response_payload
         expect(payload).not_to be_empty
         expect(payload[0]['id']).to eq(bank.id)
         expect(response).to have_http_status(:ok)
@@ -17,7 +17,7 @@ RSpec.describe 'Banks', type: :request do
     context 'when not exist data' do
       it 'should return empty data' do
         get '/banks'
-        payload = JSON.parse(response.body)
+        payload = response_payload
         expect(payload).to be_empty
         expect(response).to have_http_status(:ok)
       end
@@ -31,7 +31,7 @@ RSpec.describe 'Banks', type: :request do
       before { post '/banks', params: req_bank }
 
       it 'should return ok and create record' do
-        payload = JSON.parse(response.body)
+        payload = response_payload
         expect(payload).not_to be_empty
         expect(response).to have_http_status(:ok)
       end
@@ -44,7 +44,7 @@ RSpec.describe 'Banks', type: :request do
         before { post '/banks', params: req_bank }
 
         it 'should return bad_request' do
-          payload = JSON.parse(response.body)
+          payload = response_payload
           expect(payload).not_to be_empty
           expect(payload['error']).to eq("Couldn't create bank'")
           expect(response).to have_http_status(:bad_request)
@@ -57,7 +57,7 @@ RSpec.describe 'Banks', type: :request do
         before { post '/banks', params: req_bank }
 
         it 'should return bad_request' do
-          payload = JSON.parse(response.body)
+          payload = response_payload
           expect(payload).not_to be_empty
           expect(req_bank[:bank][:name].size).not_to eq(50)
           expect(payload['error']).to eq("Couldn't create bank'")
@@ -76,7 +76,7 @@ RSpec.describe 'Banks', type: :request do
       it 'should return the name field updated' do
         put "/banks/#{bank.id}", params: req_bank
 
-        payload = JSON.parse(response.body)
+        payload = response_payload
         expect(payload).not_to be_empty
         expect(response).to have_http_status(:ok)
       end
@@ -88,7 +88,7 @@ RSpec.describe 'Banks', type: :request do
       it 'should return not_found' do
         put "/banks/#{'x'}", params: req_bank
 
-        payload = JSON.parse(response.body)
+        payload = response_payload
         expect(payload['error']).to eq("Couldn't find Bank with 'id'=x")
         expect(response).to have_http_status(:not_found)
       end
@@ -100,7 +100,7 @@ RSpec.describe 'Banks', type: :request do
       it 'should return bad_request' do
         put "/banks/#{bank.id}", params: req_bank
 
-        payload = JSON.parse(response.body)
+        payload = response_payload
         expect(payload['error']).to eq("Couldn't update bank'")
         expect(response).to have_http_status(:bad_request)
       end
@@ -112,12 +112,42 @@ RSpec.describe 'Banks', type: :request do
       it 'should return bad_request' do
         put "/banks/#{bank.id}", params: req_bank
 
-        payload = JSON.parse(response.body)
+        payload = response_payload
         expect(payload).not_to be_empty
         expect(payload['error']).to eq("Couldn't update bank'")
         expect(req_bank[:bank][:name].size).not_to eq(50)
         expect(response).to have_http_status(:bad_request)
       end
     end
+  end
+
+  describe 'DELETE / destroy' do
+    let!(:bank) { create(:bank) }
+
+    context 'when the bank is deleted' do
+      it 'should return the record deleted' do
+        delete "/banks/#{bank.id}"
+
+        payload = response_payload
+        expect(payload).not_to be_empty
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context 'when not find id of the bank' do
+      it 'should return not_found record' do
+        delete "/banks/#{2}"
+
+        payload = response_payload
+        expect(payload['error']).to eq("Couldn't find Bank with 'id'=2")
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
+  private
+
+  def response_payload
+    JSON.parse(response.body)
   end
 end
