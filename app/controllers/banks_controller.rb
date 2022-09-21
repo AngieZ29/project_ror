@@ -15,6 +15,18 @@ class BanksController < ApplicationController
     end
   end
 
+  def update
+    @bank = Bank.find(params[:id])
+
+    if @bank.update(val_params)
+      render json: @bank, status: :ok
+    else
+      render json: { error: "Couldn't update bank'" }, status: :bad_request
+    end
+  rescue
+    render json: { error: "Couldn't find Bank with 'id'=#{params[:id]}" }, status: :not_found
+  end
+
   private
 
   def val_params

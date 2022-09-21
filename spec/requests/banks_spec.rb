@@ -66,4 +66,58 @@ RSpec.describe 'Banks', type: :request do
       end
     end
   end
+
+  describe 'PUT /update' do
+    let!(:bank) { create(:bank) }
+
+    context 'when the name value is updated' do
+      req_bank = { bank: { name: 'New Bank' } }
+
+      it 'should return the name field updated' do
+        put "/banks/#{bank.id}", params: req_bank
+
+        payload = JSON.parse(response.body)
+        expect(payload).not_to be_empty
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context 'when not find id of the bank' do
+      req_bank = { bank: { name: 'New Bank' } }
+
+      it 'should return not_found' do
+        put "/banks/#{'x'}", params: req_bank
+
+        payload = JSON.parse(response.body)
+        expect(payload['error']).to eq("Couldn't find Bank with 'id'=x")
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context 'when the name value is nil' do
+      req_bank = { bank: { name: nil } }
+
+      it 'should return bad_request' do
+        put "/banks/#{bank.id}", params: req_bank
+
+        payload = JSON.parse(response.body)
+        expect(payload['error']).to eq("Couldn't update bank'")
+        expect(response).to have_http_status(:bad_request)
+      end
+    end
+
+    context 'when the name value exceeds 50 characters' do
+      req_bank = { bank: { name: 'A' * 51 } }
+
+      it 'should return bad_request' do
+        put "/banks/#{bank.id}", params: req_bank
+
+        payload = JSON.parse(response.body)
+        expect(payload).not_to be_empty
+        expect(payload['error']).to eq("Couldn't update bank'")
+        expect(req_bank[:bank][:name].size).not_to eq(50)
+        expect(response).to have_http_status(:bad_request)
+      end
+    end
+  end
 end
